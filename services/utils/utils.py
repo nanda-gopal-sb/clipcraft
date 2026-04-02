@@ -70,7 +70,7 @@ class Utils:
         return output_path
     """
     ALTERNATE EXTRACT CLIPS FUNCTION
-    
+    """
     def extract_clips(video, best_scenes):
     os.makedirs("clips", exist_ok=True)
 
@@ -90,4 +90,4 @@ class Utils:
         subprocess.run(command, check=True)
 
     print("Clips extracted successfully.") 
-"""
+
