@@ -7,7 +7,7 @@ class Utils:
     def __init__(self):
         pass
 
-    def transcribe_video(video_path) -> list:   
+    def transcribe_video(self, video_path) -> list:   
         """
         "text": segment["text"].strip(),
         "start": segment["start"],
@@ -36,7 +36,7 @@ class Utils:
             
         return segments
 
-    def extract_clip(video_path, start, end, output_path) -> str:
+    def extract_clip(self, video_path, start, end, output_path) -> str:
          # Need to make changes such that it can take a list of timestamps
 
         start_time = max(0, start - 0.5)
