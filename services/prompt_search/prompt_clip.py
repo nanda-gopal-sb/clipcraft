@@ -6,22 +6,31 @@ from scenedetect.detectors import ContentDetector
 import cv2
 import base64
 import requests
-from services.utils import Utils
+from services.utils.utils import Utils
 
 utils = Utils()
 
-'''
+
 def transcribe_audio(video):
     model = whisper.load_model("base")
     result = model.transcribe(video)
     print("Transcript done")
     return result["segments"]
-    '''
-'''
+    
+
 def detect_scenes(video):
     video_stream = open_video(video)
+    
+    # Get FPS to calculate frame count if you want to work in seconds
+    fps = video_stream.frame_rate 
+    min_duration_seconds = 3
+    min_frames = int(min_duration_seconds * fps)
+
     scene_manager = SceneManager()
-    scene_manager.add_detector(ContentDetector())
+    
+    # Add the parameter here
+    scene_manager.add_detector(ContentDetector(min_scene_len=min_frames))
+    
     scene_manager.detect_scenes(video_stream)
     scene_list = scene_manager.get_scene_list()
 
@@ -31,7 +40,7 @@ def detect_scenes(video):
 
     print("Scenes:", scenes)
     return scenes
-    '''
+    
 
 def get_scene_transcript(scene, transcript_segments):
     scene_start, scene_end = scene
@@ -69,13 +78,47 @@ def describe_scene(scene, video):
         "model": "llava",
         "prompt": "Describe what is visually happening in this scene in one short sentence.",
         "images": [image_base64],
-        "stream": False
+        "stream": False,
+        "keep_alive": "10m"
     }
 
     response = requests.post("http://localhost:11434/api/generate", json=payload)
     description = response.json()["response"].strip()
 
     print("Description:", description)
+    return description
+
+def describe_scene(scene, video):
+    start, end = scene
+    middle_time = (start + end) / 2
+
+    cap = cv2.VideoCapture(video)
+    cap.set(cv2.CAP_PROP_POS_MSEC, middle_time * 1000)
+    success, frame = cap.read()
+    cap.release()
+
+    if not success:
+        return "Could not read frame"
+
+    frame_path = "temp_frame.jpg"
+    cv2.imwrite(frame_path, frame)
+
+    with open(frame_path, "rb") as f:
+        image_base64 = base64.b64encode(f.read()).decode("utf-8")
+
+    payload = {
+        "model": "llava",
+        "prompt": "Describe what is visually happening in this scene in one short sentence.",
+        "images": [image_base64],
+        "stream": False,
+        "keep_alive": "10m"
+    }
+
+    response = requests.post("http://localhost:11434/api/generate", json=payload)
+    description = response.json()["response"].strip()
+
+    print("Description:", description)
+    return description
     return description
 
 def score_scene(prompt, description, transcript_text):
@@ -105,7 +148,8 @@ Scoring rules:
 
 Only return the number.
 """,
-        "stream": False
+        "stream": False,
+        "keep_alive": "10m"
     }
 
     response = requests.post("http://localhost:11434/api/generate", json=payload)
@@ -140,19 +184,23 @@ def extract_clips(video, best_scenes):
     print("Clips extracted successfully.")
 
 def run_prompt_clipper(video_path, prompt):
-    transcript = Utils.transcribe_video(video_path)
-    scenes = Utils.detect_scenes(video_path)
+    transcript = transcribe_audio(video_path)
+    scenes = detect_scenes(video_path)
 
     scored_scenes = []
+    descriptions=[]
 
     for scene in scenes:
         description = describe_scene(scene, video_path)
+        descriptions.append(description)
+
+    for scene, description in zip(scenes,descriptions):
         transcript_text = get_scene_transcript(scene, transcript)
         score = score_scene(prompt, description, transcript_text)
         scored_scenes.append((scene, score))
 
     scored_scenes.sort(key=lambda x: x[1], reverse=True)
-    best_scenes = [scene for scene, score in scored_scenes[:3]]
+    best_scenes = [scene for scene, score in scored_scenes[:5]]
     extract_clips(video_path, best_scenes)
 
     return best_scenes
