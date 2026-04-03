@@ -17,8 +17,28 @@ def face_clipper():
 
 
 def video_prompt():
+    '''
     string = prompt_service.health()
     st.title(string)
+    '''
+    st.title("Prompt-Based Clip Extractor")
+
+    uploaded_video = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"])
+    prompt = st.text_input("Enter prompt")
+
+    if uploaded_video is not None and prompt:
+        with open(uploaded_video.name, "wb") as f:
+            f.write(uploaded_video.read())
+
+        if st.button("Extract Clips"):
+            with st.spinner("Processing video..."):
+                result = prompt_service.run(uploaded_video.name, prompt)
+
+            st.success("Clips extracted successfully!")
+            st.write("Top matching scenes:")
+            st.write(result)
+
+
 
 
 def dialouge_search():
