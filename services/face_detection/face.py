@@ -17,7 +17,7 @@ class face_detection:
             self.utils = Utils()
     
     def detect_scenes(video):
-                return self.Utils.detect_scenes(video)    
+                return self.utils.detect_scenes(video)    
     
     
     def get_face_scenes(video, scenes):
@@ -96,7 +96,7 @@ class face_detection:
     
     
     def extract_clips(video, best_scenes):
-        return self.Utils.extract_clips(video, best_scenes)
+        return self.utils.extract_clips(video, best_scenes)
     
     
 # ── Main ──────────────────────────────────────────────────────────────────────
