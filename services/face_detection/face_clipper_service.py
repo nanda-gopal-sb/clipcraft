@@ -91,3 +91,4 @@ class FaceDetectionService:
     
     def extract_clips(self, video, best_scenes):
         return self.utils.extract_clips(video, best_scenes)
+    

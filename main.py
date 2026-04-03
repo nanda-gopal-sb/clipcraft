@@ -23,6 +23,7 @@ def face_clipper():
 
     if uploaded_ref:
         st.session_state["ref_path"] = save_uploaded_file(uploaded_ref)
+        print(st.session_state["ref_path"])
         st.success(f"Reference image uploaded: {st.session_state['ref_path']}")
 
     video_path = st.session_state.get("video_path")
@@ -46,6 +47,7 @@ def face_clipper():
             with st.spinner("Searching face scenes..."):
                 if mode == "Reference face" and ref_path:
                     face_scenes = face_service.get_scenes_with_reference(video_path, scenes, ref_path)
+                    #To be implemented
                 else:
                     face_scenes = face_service.get_face_scenes(video_path, scenes)
                 st.session_state["face_scenes"] = face_scenes
