@@ -6,14 +6,18 @@ from scenedetect.detectors import ContentDetector
 import cv2
 import base64
 import requests
+from services.utils import Utils
 
+utils = Utils()
 
+'''
 def transcribe_audio(video):
     model = whisper.load_model("base")
     result = model.transcribe(video)
     print("Transcript done")
     return result["segments"]
-
+    '''
+'''
 def detect_scenes(video):
     video_stream = open_video(video)
     scene_manager = SceneManager()
@@ -27,6 +31,7 @@ def detect_scenes(video):
 
     print("Scenes:", scenes)
     return scenes
+    '''
 
 def get_scene_transcript(scene, transcript_segments):
     scene_start, scene_end = scene
@@ -135,8 +140,8 @@ def extract_clips(video, best_scenes):
     print("Clips extracted successfully.")
 
 def run_prompt_clipper(video_path, prompt):
-    transcript = transcribe_audio(video_path)
-    scenes = detect_scenes(video_path)
+    transcript = Utils.transcribe_video(video_path)
+    scenes = Utils.detect_scenes(video_path)
 
     scored_scenes = []
 
