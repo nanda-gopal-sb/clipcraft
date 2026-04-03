@@ -6,21 +6,24 @@ from scenedetect.detectors import ContentDetector
 from deepface import DeepFace
 from services.utils.utils import Utils
 
+FACE_CASCADE = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
 
 # ── Face detection setup ──────────────────────────────────────────────────────
 # Uses OpenCV's built-in Haar cascade (no extra model downloads needed).
 class face_detection:
-    FACE_CASCADE = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
+    # FACE_CASCADE = cv2.CascadeClassifier(
+    #     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    # )
     def __init__(self):
             self.utils = Utils()
     
-    def detect_scenes(video):
-                return self.utils.detect_scenes(video)    
+    def detect_scenes(self, video):
+                return self.Utils.detect_scenes(video)    
     
     
-    def get_face_scenes(video, scenes):
+    def get_face_scenes(self, video, scenes):
         cap = cv2.VideoCapture(video)
         face_scenes = []
         
@@ -46,7 +49,7 @@ class face_detection:
         return face_scenes
     
     
-    def get_scenes_with_reference(video, scenes, ref_img_path):
+    def get_scenes_with_reference(self, video, scenes, ref_img_path):
         cap = cv2.VideoCapture(video)
         matching_scenes = []
         
@@ -95,8 +98,8 @@ class face_detection:
         return matching_scenes
     
     
-    def extract_clips(video, best_scenes):
-        return self.utils.extract_clips(video, best_scenes)
+    def extract_clips(self, video, best_scenes):
+        return self.Utils.extract_clips(video, best_scenes)
     
     
 # ── Main ──────────────────────────────────────────────────────────────────────

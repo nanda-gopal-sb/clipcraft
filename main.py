@@ -2,7 +2,6 @@ import os
 import tempfile
 import streamlit as st
 
-
 from services.dialouge_search.dialouge_service import DialougeService
 from services.face_detection.face_clipper_service import FaceDetectionService
 from services.prompt_search.prompt_search_service import PromptService
@@ -12,9 +11,69 @@ face_service = FaceDetectionService()
 prompt_service = PromptService()
 
 def face_clipper():
-    string = face_service.health()
-    st.title(string)
+    st.header("Face Scene Detection")
 
+    # 1) Upload files
+    uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
+    uploaded_ref = st.file_uploader("Upload reference image (optional)", type=["jpg", "jpeg", "png"])
+
+    if uploaded_video:
+        st.session_state["video_path"] = save_uploaded_file(uploaded_video)
+        st.success(f"Video uploaded: {st.session_state['video_path']}")
+
+    if uploaded_ref:
+        st.session_state["ref_path"] = save_uploaded_file(uploaded_ref)
+        print(st.session_state["ref_path"])
+        st.success(f"Reference image uploaded: {st.session_state['ref_path']}")
+
+    video_path = st.session_state.get("video_path")
+    ref_path = st.session_state.get("ref_path")
+
+    # 2) Detect scenes
+    if video_path and st.button("Detect Scenes"):
+        with st.spinner("Detecting scenes..."):
+            scenes = face_service.detect_scenes(video_path)
+            st.session_state["scenes"] = scenes
+            st.success(f"{len(scenes)} scenes detected")
+            st.write(scenes)
+
+    # 3) Face scene selection
+    scenes = st.session_state.get("scenes", [])
+    if scenes:
+        st.markdown("### Face search mode")
+        mode = st.radio("Choose mode", ["Any face", "Reference face"], index=0)
+        face_scenes = []
+        if st.button("Find Face Scenes"):
+            with st.spinner("Searching face scenes..."):
+                if mode == "Reference face" and ref_path:
+                    face_scenes = face_service.get_scenes_with_reference(video_path, scenes, ref_path)
+                    #To be implemented
+                else:
+                    face_scenes = face_service.get_face_scenes(video_path, scenes)
+                st.session_state["face_scenes"] = face_scenes
+                st.success(f"Found {len(face_scenes)} face scenes")
+                st.write(face_scenes)
+
+    # 4) Clip extraction
+    face_scenes = st.session_state.get("face_scenes", [])
+    if face_scenes:
+        st.subheader("Clip extraction")
+        if st.button("Extract Clips"):
+            with st.spinner("Extracting clips..."):
+                result_paths = face_service.extract_clips(video_path, face_scenes)
+                st.session_state["extracted_clips"] = result_paths
+                st.success(f"Extracted {len(result_paths)} clips successfully!")
+
+    # Display extracted clips
+    extracted_clips = st.session_state.get("extracted_clips", [])
+    if extracted_clips:
+        st.subheader("🎬 Extracted Clips")
+        for i, clip_path in enumerate(extracted_clips, 1):
+            st.markdown(f"**Clip {i}**: `{clip_path}`")
+            if os.path.exists(clip_path):
+                st.video(clip_path)
+            else:
+                st.warning(f"File not found: {clip_path}")
 
 def video_prompt():
     '''
@@ -97,7 +156,7 @@ def save_uploaded_file(uploaded_file):
     return tmp.name
 
 def main():
-    st.title("ClipCraft UI")
+    st.title("ClipCraft")
     pg = st.navigation([
         st.Page(dialouge_search, title="Dialogue Search"),
         st.Page(face_clipper, title="Face Detection"), 
