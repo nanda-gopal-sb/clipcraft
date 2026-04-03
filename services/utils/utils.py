@@ -8,21 +8,20 @@ class Utils:
         pass
 
     def detect_scenes(video):
-    video_stream = open_video(video)
-    scene_manager = SceneManager()
-    scene_manager.add_detector(ContentDetector())
-    scene_manager.detect_scenes(video_stream)
-    scene_list = scene_manager.get_scene_list()
+        video_stream = open_video(video)
+        scene_manager = SceneManager()
+        scene_manager.add_detector(ContentDetector())
+        scene_manager.detect_scenes(video_stream)
+        scene_list = scene_manager.get_scene_list()
 
-    scenes = []
-    for start, end in scene_list:
-        scenes.append((start.get_seconds(), end.get_seconds()))
+        scenes = []
+        for start, end in scene_list:
+            scenes.append((start.get_seconds(), end.get_seconds()))
 
-    print("Scenes:", scenes)
-    return scenes
+        print("Scenes:", scenes)
+        return scenes
 
-
-    def transcribe_video(video_path) -> list:   
+    def transcribe_video(self, video_path) -> list:   
         """
         "text": segment["text"].strip(),
         "start": segment["start"],
@@ -51,7 +50,7 @@ class Utils:
             
         return segments
 
-    def extract_clip(video_path, start, end, output_path) -> str:
+    def extract_clip(self, video_path, start, end, output_path) -> str:
          # Need to make changes such that it can take a list of timestamps
 
         start_time = max(0, start - 0.5)
@@ -72,11 +71,11 @@ class Utils:
     ALTERNATE EXTRACT CLIPS FUNCTION
     """
     def extract_clips(video, best_scenes):
-    os.makedirs("clips", exist_ok=True)
+        os.makedirs("clips", exist_ok=True)
 
-    for i, scene in enumerate(best_scenes, start=1):
-        start, end = scene
-        output_file = f"clips/clip_{i}.mp4"
+        for i, scene in enumerate(best_scenes, start=1):
+            start, end = scene
+            output_file = f"clips/clip_{i}.mp4"
 
         command = [
             "ffmpeg",
