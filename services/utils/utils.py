@@ -2,6 +2,8 @@ import tempfile
 import ffmpeg
 import whisper
 import os
+from scenedetect import open_video, SceneManager
+from scenedetect.detectors import ContentDetector
 
 class Utils:
     def __init__(self):

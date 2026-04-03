@@ -17,7 +17,7 @@ def transcribe_audio(video):
     print("Transcript done")
     return result["segments"]
     
-
+'''
 def detect_scenes(video):
     video_stream = open_video(video)
     
@@ -41,6 +41,7 @@ def detect_scenes(video):
     print("Scenes:", scenes)
     return scenes
     
+'''
 
 def get_scene_transcript(scene, transcript_segments):
     scene_start, scene_end = scene
@@ -54,7 +55,6 @@ def get_scene_transcript(scene, transcript_segments):
             matched_text.append(segment["text"])
 
     return " ".join(matched_text).strip()
-
 
 def describe_scene(scene, video):
     start, end = scene
@@ -185,7 +185,7 @@ def extract_clips(video, best_scenes):
 
 def run_prompt_clipper(video_path, prompt):
     transcript = transcribe_audio(video_path)
-    scenes = detect_scenes(video_path)
+    scenes = Utils.detect_scenes(video_path)
 
     scored_scenes = []
     descriptions=[]
