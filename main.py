@@ -77,17 +77,13 @@ def save_uploaded_file(uploaded_file):
     return tmp.name
 
 def main():
-    st.title("ClipCraft")
-    page = st.sidebar.selectbox(
-        "Choose page",
-        ["Dialogue Search", "Face Detection", "Prompt Search"]
-    )
-    if page == "Dialogue Search":
-        dialouge_search()
-    elif page == "Face Detection":
-        face_clipper()
-    elif page == "Prompt Search":
-        video_prompt()
+    st.title("ClipCraft UI")
+    pg = st.navigation([
+        st.Page(dialouge_search, title="Dialogue Search"),
+        st.Page(face_clipper, title="Face Detection"), 
+        st.Page(video_prompt, title="Prompt Search")
+    ])
+    pg.run()
 
 if __name__ == "__main__":
     main()
