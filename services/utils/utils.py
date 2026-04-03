@@ -2,12 +2,15 @@ import tempfile
 import ffmpeg
 import whisper
 import os
+import subprocess
+from scenedetect import open_video, SceneManager
+from scenedetect.detectors import ContentDetector
 
 class Utils:
     def __init__(self):
         pass
 
-    def detect_scenes(video):
+    def detect_scenes(self, video):
         video_stream = open_video(video)
         scene_manager = SceneManager()
         scene_manager.add_detector(ContentDetector())
@@ -70,23 +73,27 @@ class Utils:
     """
     ALTERNATE EXTRACT CLIPS FUNCTION
     """
-    def extract_clips(video, best_scenes):
+    def extract_clips(self, video, best_scenes):
         os.makedirs("clips", exist_ok=True)
+        extracted_files = []
 
         for i, scene in enumerate(best_scenes, start=1):
             start, end = scene
             output_file = f"clips/clip_{i}.mp4"
 
-        command = [
-            "ffmpeg",
-            "-i", video,
-            "-ss", str(start),
-            "-to", str(end),
-            "-c", "copy",
-            output_file
-        ]
+            command = [
+                "ffmpeg",
+                "-i", video,
+                "-ss", str(start),
+                "-to", str(end),
+                "-c", "copy",
+                "-y",  # Automatically overwrite output files
+                output_file
+            ]
 
-        subprocess.run(command, check=True)
+            subprocess.run(command, check=True)
+            extracted_files.append(output_file)
 
-    print("Clips extracted successfully.") 
+        print("Clips extracted successfully.")
+        return extracted_files 
 
