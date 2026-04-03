@@ -34,7 +34,7 @@ def dialouge_search():
             with st.spinner("Transcribing..."):
                 segments = dialouge_service.dialouge_transcribe(video_path)
                 st.session_state["transcript_segments"] = segments
-                st.write("Transcript segments:", segments)
+                st.write("Transcription Completed")
 
     segments = st.session_state.get("transcript_segments", [])
     video_path = st.session_state.get("video_path", None)
@@ -77,7 +77,7 @@ def save_uploaded_file(uploaded_file):
     return tmp.name
 
 def main():
-    st.title("ClipCraft UI")
+    st.title("ClipCraft")
     page = st.sidebar.selectbox(
         "Choose page",
         ["Dialogue Search", "Face Detection", "Prompt Search"]
