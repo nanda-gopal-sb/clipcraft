@@ -10,7 +10,7 @@ class Utils:
     def __init__(self):
         pass
 
-    def detect_scenes(self,video):
+    def detect_scenes(video):
         video_stream = open_video(video)
         
         # Get FPS to calculate frame count if you want to work in seconds

@@ -1,5 +1,6 @@
 import os
 import subprocess
+from urllib import response
 import whisper
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
@@ -185,7 +186,7 @@ def extract_clips(video, best_scenes):
 
 def run_prompt_clipper(video_path, prompt):
     transcript = transcribe_audio(video_path)
-    scenes = Utils.detect_scenes(video_path)
+    scenes = utils.detect_scenes(video_path)
 
     scored_scenes = []
     descriptions=[]
