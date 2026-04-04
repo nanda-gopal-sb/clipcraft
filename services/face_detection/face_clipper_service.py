@@ -1,15 +1,9 @@
 import cv2
-from deepface import DeepFace
+import face_recognition
 from services.utils.utils import Utils
 
-FACE_CASCADE = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    )
 
-# ── Face detection setup ──────────────────────────────────────────────────────
-# Uses OpenCV's built-in Haar cascade (no extra model downloads needed).
 class FaceDetectionService:
-
     def __init__(self):
         self.utils = Utils()
     
@@ -22,6 +16,7 @@ class FaceDetectionService:
         
         for start, end in scenes:
             has_face = False
+            # Sample 5 points across the scene duration
             timestamps = [start + (end - start) * i / 4 for i in range(5)]
             
             for t in timestamps:
@@ -29,9 +24,13 @@ class FaceDetectionService:
                 ret, frame = cap.read()
                 if not ret: continue
                 
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = FACE_CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-                if len(faces) > 0:
+                # Convert BGR (OpenCV) to RGB (face_recognition)
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Detect face locations
+                face_locations = face_recognition.face_locations(rgb_frame)
+                
+                if len(face_locations) > 0:
                     has_face = True
                     break
                     
@@ -42,6 +41,15 @@ class FaceDetectionService:
         return face_scenes
     
     def get_scenes_with_reference(self, video, scenes, ref_img_path):
+        # 1. Load and encode the reference image once
+        ref_image = face_recognition.load_image_file(ref_img_path)
+        ref_encodings = face_recognition.face_encodings(ref_image)
+        
+        if not ref_encodings:
+            print("No face found in reference image.")
+            return []
+            
+        target_encoding = ref_encodings[0]
         cap = cv2.VideoCapture(video)
         matching_scenes = []
         
@@ -54,35 +62,19 @@ class FaceDetectionService:
                 ret, frame = cap.read()
                 if not ret: continue
                 
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = FACE_CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+                # Convert BGR to RGB
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                for (x, y, w, h) in faces:
-                    # Crop face with a slight margin
-                    margin = int(w * 0.2)
-                    y1 = max(0, y - margin)
-                    y2 = min(frame.shape[0], y + h + margin)
-                    x1 = max(0, x - margin)
-                    x2 = min(frame.shape[1], x + w + margin)
-                    
-                    face_crop = frame[y1:y2, x1:x2]
-                    
-                    try:
-                        # Verify using DeepFace with the Haar cascade crop
-                        res = DeepFace.verify(
-                            img1_path=ref_img_path,
-                            img2_path=face_crop,
-                            enforce_detection=False,
-                        )
-                        if res.get("verified", False):
-                            has_match = True
-                            break
-                    except Exception:
-                        pass
+                # Detect and encode faces in the current frame
+                current_encodings = face_recognition.face_encodings(rgb_frame)
+                
+                # Check if any face in the frame matches the reference
+                if current_encodings:
+                    matches = face_recognition.compare_faces(current_encodings, target_encoding, tolerance=0.6)
+                    if True in matches:
+                        has_match = True
+                        break
                         
-                if has_match:
-                    break
-                    
             if has_match:
                 matching_scenes.append((start, end))
     
@@ -91,4 +83,3 @@ class FaceDetectionService:
     
     def extract_clips(self, video, best_scenes):
         return self.utils.extract_clips(video, best_scenes)
-    

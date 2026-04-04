@@ -10,10 +10,19 @@ class Utils:
     def __init__(self):
         pass
 
-    def detect_scenes(self, video):
+    def detect_scenes(self,video):
         video_stream = open_video(video)
+        
+        # Get FPS to calculate frame count if you want to work in seconds
+        fps = video_stream.frame_rate 
+        min_duration_seconds = 3
+        min_frames = int(min_duration_seconds * fps)
+
         scene_manager = SceneManager()
-        scene_manager.add_detector(ContentDetector())
+        
+        # Add the parameter here
+        scene_manager.add_detector(ContentDetector(min_scene_len=min_frames))
+        
         scene_manager.detect_scenes(video_stream)
         scene_list = scene_manager.get_scene_list()
 

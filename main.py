@@ -13,7 +13,7 @@ prompt_service = PromptService()
 def face_clipper():
     st.header("Face Scene Detection")
 
-    # 1) Upload files
+    #1) Upload files
     uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
     uploaded_ref = st.file_uploader("Upload reference image (optional)", type=["jpg", "jpeg", "png"])
 
