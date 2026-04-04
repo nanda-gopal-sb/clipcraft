@@ -76,26 +76,54 @@ def face_clipper():
                 st.warning(f"File not found: {clip_path}")
 
 def video_prompt():
-    '''
-    string = prompt_service.health()
-    st.title(string)
-    '''
     st.title("Prompt-Based Clip Extractor")
 
     uploaded_video = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"])
     prompt = st.text_input("Enter prompt")
 
-    if uploaded_video is not None and prompt:
+    if st.button("Extract Clips"):
+        if uploaded_video is None:
+            st.error("Upload a video first")
+            return
+        if not prompt:
+            st.error("Enter a prompt")
+            return
+
         with open(uploaded_video.name, "wb") as f:
-            f.write(uploaded_video.read())
+            f.write(uploaded_video.getbuffer())
 
-        if st.button("Extract Clips"):
-            with st.spinner("Processing video..."):
-                result = prompt_service.run(uploaded_video.name, prompt)
+        with st.spinner("Processing video..."):
+            result = prompt_service.run(uploaded_video.name, prompt)
 
-            st.success("Clips extracted successfully!")
-            st.write("Top matching scenes:")
-            st.write(result)
+        st.success("Clips extracted successfully!")
+
+        import subprocess
+        import os
+
+        st.subheader("Extracted Clips")
+
+        for i, seg in enumerate(result):
+            start = seg[0]
+            end = seg[1]
+
+            st.write(f"{i}: Start = {start}s, End = {end}s")
+
+            output_file = f"clip_{i}.mp4"
+
+            subprocess.run([
+                "ffmpeg",
+                "-y",
+                "-i", uploaded_video.name,
+                "-ss", str(start),
+                "-to", str(end),
+                "-c", "copy",
+                output_file
+            ])
+
+            st.video(output_file)
+        
+
+
 
 
 
