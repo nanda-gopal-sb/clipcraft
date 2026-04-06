@@ -5,28 +5,49 @@ import streamlit as st
 from services.dialouge_search.dialouge_service import DialougeService
 from services.face_detection.face_clipper_service import FaceDetectionService
 from services.prompt_search.prompt_search_service import PromptService
+from services.utils.utils import Utils
 
 dialouge_service = DialougeService()
 face_service = FaceDetectionService()
 prompt_service = PromptService()
+utils = Utils()
 
 def face_clipper():
     st.header("Face Scene Detection")
 
-    #1) Upload files
-    uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
-    uploaded_ref = st.file_uploader("Upload reference image (optional)", type=["jpg", "jpeg", "png"])
+    # Choose input method
+    input_method = st.radio("Choose input method", ["Upload Video", "YouTube URL"], index=0)
 
-    if uploaded_video:
-        st.session_state["video_path"] = save_uploaded_file(uploaded_video)
-        st.success(f"Video uploaded: {st.session_state['video_path']}")
+    #1) Upload files or YouTube URL
+    if input_method == "Upload Video":
+        uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
+        video_path = None
+        if uploaded_video:
+            video_path = save_uploaded_file(uploaded_video)
+            st.session_state["face_video_path"] = video_path
+            st.success(f"Video uploaded: {video_path}")
+    else:
+        youtube_url = st.text_input("Enter YouTube URL")
+        if youtube_url and st.button("Download Video"):
+            try:
+                with st.spinner("Downloading video from YouTube..."):
+                    video_path = utils.download_youtube_video(youtube_url)
+                    st.session_state["face_video_path"] = video_path
+                    st.success(f"Video downloaded: {video_path}")
+            except Exception as e:
+                st.error(f"Failed to download video: {str(e)}")
+                video_path = None
+        else:
+            video_path = st.session_state.get("face_video_path")
+
+    uploaded_ref = st.file_uploader("Upload reference image (optional)", type=["jpg", "jpeg", "png"])
 
     if uploaded_ref:
         st.session_state["ref_path"] = save_uploaded_file(uploaded_ref)
         print(st.session_state["ref_path"])
         st.success(f"Reference image uploaded: {st.session_state['ref_path']}")
 
-    video_path = st.session_state.get("video_path")
+    video_path = st.session_state.get("face_video_path")
     ref_path = st.session_state.get("ref_path")
 
     # 2) Detect scenes
@@ -78,22 +99,42 @@ def face_clipper():
 def video_prompt():
     st.title("Prompt-Based Clip Extractor")
 
-    uploaded_video = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"])
+    # Choose input method
+    input_method = st.radio("Choose input method", ["Upload Video", "YouTube URL"], index=0, key="prompt_input_method")
+
+    if input_method == "Upload Video":
+        uploaded_video = st.file_uploader("Upload a video", type=["mp4", "mov", "avi", "mkv"])
+        video_path = None
+        if uploaded_video:
+            video_path = save_uploaded_file(uploaded_video)
+            st.session_state["prompt_video_path"] = video_path
+            st.success(f"Video uploaded: {video_path}")
+    else:
+        youtube_url = st.text_input("Enter YouTube URL", key="prompt_youtube_url")
+        if youtube_url and st.button("Download Video", key="prompt_download"):
+            try:
+                with st.spinner("Downloading video from YouTube..."):
+                    video_path = utils.download_youtube_video(youtube_url)
+                    st.session_state["prompt_video_path"] = video_path
+                    st.success(f"Video downloaded: {video_path}")
+            except Exception as e:
+                st.error(f"Failed to download video: {str(e)}")
+                video_path = None
+        else:
+            video_path = st.session_state.get("prompt_video_path")
+
     prompt = st.text_input("Enter prompt")
 
     if st.button("Extract Clips"):
-        if uploaded_video is None:
-            st.error("Upload a video first")
+        if video_path is None:
+            st.error("Please upload a video or provide a YouTube URL first")
             return
         if not prompt:
             st.error("Enter a prompt")
             return
 
-        with open(uploaded_video.name, "wb") as f:
-            f.write(uploaded_video.getbuffer())
-
         with st.spinner("Processing video..."):
-            result = prompt_service.run(uploaded_video.name, prompt)
+            result = prompt_service.run(video_path, prompt)
 
         st.success("Clips extracted successfully!")
 
@@ -113,7 +154,7 @@ def video_prompt():
             subprocess.run([
                 "ffmpeg",
                 "-y",
-                "-i", uploaded_video.name,
+                "-i", video_path,
                 "-ss", str(start),
                 "-to", str(end),
                 "-c", "copy",
@@ -131,20 +172,37 @@ def video_prompt():
 def dialouge_search():
     st.header("Dialogue Search")
 
-    uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
-    if uploaded_video:
-        video_path = save_uploaded_file(uploaded_video)
-        st.session_state["video_path"] = video_path
-        st.success(f"File saved: {video_path}")
+    # Choose input method
+    input_method = st.radio("Choose input method", ["Upload Video", "YouTube URL"], index=0, key="dialogue_input_method")
 
-        if st.button("Transcribe"):
-            with st.spinner("Transcribing..."):
-                segments = dialouge_service.dialouge_transcribe(video_path)
-                st.session_state["transcript_segments"] = segments
-                st.write("Transcription Completed")
+    if input_method == "Upload Video":
+        uploaded_video = st.file_uploader("Upload video", type=["mp4", "mov", "mkv"])
+        video_path = None
+        if uploaded_video:
+            video_path = save_uploaded_file(uploaded_video)
+            st.session_state["dialogue_video_path"] = video_path
+            st.success(f"File saved: {video_path}")
+    else:
+        youtube_url = st.text_input("Enter YouTube URL", key="dialogue_youtube_url")
+        if youtube_url and st.button("Download Video", key="dialogue_download"):
+            try:
+                with st.spinner("Downloading video from YouTube..."):
+                    video_path = utils.download_youtube_video(youtube_url)
+                    st.session_state["dialogue_video_path"] = video_path
+                    st.success(f"Video downloaded: {video_path}")
+            except Exception as e:
+                st.error(f"Failed to download video: {str(e)}")
+                video_path = None
+        else:
+            video_path = st.session_state.get("dialogue_video_path")
+
+    if video_path and st.button("Transcribe"):
+        with st.spinner("Transcribing..."):
+            segments = dialouge_service.dialouge_transcribe(video_path)
+            st.session_state["transcript_segments"] = segments
+            st.write("Transcription Completed")
 
     segments = st.session_state.get("transcript_segments", [])
-    video_path = st.session_state.get("video_path", None)
     query = st.text_input("Search transcript for", "")
 
     if st.button("Search"):

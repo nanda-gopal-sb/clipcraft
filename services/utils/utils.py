@@ -6,9 +6,36 @@ import subprocess
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
 
+try:
+    import yt_dlp
+    YT_DLP_AVAILABLE = True
+except ImportError:
+    YT_DLP_AVAILABLE = False
+
 class Utils:
     def __init__(self):
         pass
+
+    def download_youtube_video(self, url: str) -> str:
+        """
+        Download a YouTube video and return the path to the downloaded file.
+        """
+        if not YT_DLP_AVAILABLE:
+            raise ImportError("yt-dlp is not installed. Please install it with: pip install yt-dlp")
+        
+        # Create a temporary directory for the download
+        temp_dir = tempfile.mkdtemp()
+        
+        ydl_opts = {
+            'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+            'format': 'best[height<=720]',  # Limit to 720p for faster download
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+        
+        return filename
 
     def detect_scenes(self, video):
         video_stream = open_video(video)
