@@ -5,6 +5,7 @@ import os
 import subprocess
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
+import yt_dlp
 
 class Utils:
     def __init__(self):
@@ -104,5 +105,5 @@ class Utils:
             extracted_files.append(output_file)
 
         print("Clips extracted successfully.")
-        return extracted_files 
-
+        return extracted_files
+    
