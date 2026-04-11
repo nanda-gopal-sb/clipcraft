@@ -109,7 +109,7 @@ def describe_scene(scene, video):
 
     payload = {
         "model": "llava",
-        "prompt": "Describe what is visually happening in this scene in one short sentence.",
+        "prompt": "Describe this video frame in detail. Mention people, actions, facial expressions, objects, setting, mood, and anything visually important.",
         "images": [image_base64],
         "stream": False,
         "keep_alive": "10m"
@@ -126,28 +126,34 @@ def score_scene(prompt, description, transcript_text):
     payload = {
         "model": "mistral",
         "prompt": f"""
-User Prompt: {prompt}
+You are evaluating whether a video scene matches a user's request.
 
-Scene Description: {description}
+User request:
+{prompt}
 
-Scene Transcription: {transcript_text}
+Visual description of the scene:
+{description}
 
-You are scoring how well this video scene matches the user's prompt.
+Transcript spoken in the scene:
+{transcript_text}
 
-Use BOTH:
-1. the visual scene description
-2. the spoken dialogue / transcription
+Instructions:
+- Use both the visual description and transcript.
+- Focus on actions, emotions, people, objects, and spoken meaning.
+- Be strict. Do not give a high score unless the match is clearly strong.
+- If the scene is only slightly related, give a low score.
 
-Compare them together against the user's prompt.
+Scoring guide:
+0 = no relation at all
+2 = very weak match
+4 = somewhat related
+6 = moderately relevant
+8 = strong match
+10 = perfect match
 
-Give only a single number from 0 to 10.
-
-Scoring rules:
-- 0 = completely unrelated
-- 5 = somewhat relevant
-- 10 = perfect match
-
-Only return the number.
+Return only one number from 0 to 10.
+Do not explain anything.
+Do not return any text other than the number.
 """,
         "stream": False,
         "keep_alive": "10m"
@@ -172,13 +178,15 @@ def extract_clips(video, best_scenes):
         output_file = f"clips/clip_{i}.mp4"
 
         command = [
-            "ffmpeg",
-            "-i", video,
-            "-ss", str(start),
-            "-to", str(end),
-            "-c", "copy",
-            output_file
-        ]
+    "ffmpeg",
+    "-y",
+    "-ss", str(start),
+    "-to", str(end),
+    "-i", video,
+    "-c:v", "h264_nvenc",
+    "-c:a", "aac",
+    output_file
+]
 
         subprocess.run(command, check=True)
 
